@@ -1,0 +1,50 @@
+{
+  "name": "jeefo_preprocessor",
+  "version": "0.0.1",
+  "description": "jeefo javascript preprocessor",
+  "author": {
+    "name": "je3f0o",
+    "email": "je3f0o@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/je3f0o/jeefo_preprocessor",
+  "copyright": "2017",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/je3f0o/jeefo_preprocessor.git"
+  },
+  "scripts": {
+    "build": "node build"
+  },
+  "keywords": [
+    "jeefo",
+    "parser",
+    "compiler",
+    "javascript",
+    "beautifier",
+    "preprocessor"
+  ],
+  "dependencies": {
+    "jeefo": "^0.0.13",
+    "jeefo_core": "^0.0.10",
+    "jeefo_javascript_beautifier": "^0.0.3",
+    "jeefo_javascript_parser": "^0.0.6",
+    "jeefo_tokenizer": "^0.0.21"
+  },
+  "devDependencies": {
+    "expect": "^1.20.2",
+    "fs-extra": "^3.0.0",
+    "mocha": "^3.2.0",
+    "uglify-js": "^2.8.22"
+  },
+  "uglify_config": {
+    "mangle": {
+      "toplevel": true
+    },
+    "compress": {
+      "comparisons": false
+    },
+    "fromString": true
+  }
+}
