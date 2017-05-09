@@ -16,7 +16,7 @@ module.exports = function (jeefo) {
 
 //ignore:end
 
-jeefo.module("jeefo_preprocessor", ["jeefo_javascript_beautifier"]).
+jeefo.module("jeefo.preprocessor", ["jeefo_javascript_beautifier"]).
 
 // JeefoObject {{{1
 namespace("JeefoObject", [
@@ -123,7 +123,7 @@ namespace("preprocessor.Actions", [
 		Actions     : Actions,
 		JeefoObject : JeefoObject,
 
-		$copy : function () {
+		copy : function () {
 			return new this.Actions(this.handlers);
 		},
 
@@ -151,7 +151,7 @@ namespace("javascript.Preprocessor", [
 
 	// Preprocessor {{{2
 	var Preprocessor = function (parser, compiler, actions, scope, state) {
-		this.state    = state,
+		this.state    = state;
 		this.scope    = scope;
 		this.parser   = parser;
 		this.actions  = actions;
@@ -168,7 +168,7 @@ namespace("javascript.Preprocessor", [
 		},
 
 		copy : function () {
-			return new this.Preprocessor(this.parser, this.compiler, this.actions, this.scope.copy());
+			return new this.Preprocessor(this.parser, this.compiler, this.actions.copy(), this.scope.copy());
 		},
 
 		// Actions {{{3
@@ -237,13 +237,15 @@ namespace("javascript.Preprocessor", [
 						definition.tokens = this.parse(definition.code);
 					}
 
-					// jshint curly : false
-					for (i = token.parameters.length - 1,
-						definition.params = new this.Array(i + 1),
-						definition.params[i] = token.parameters[i].name;
-						i >= 0;
-						definition.params[i] = token.parameters[i].name, --i);
-					// jshint curly : true
+					if (token.parameters.length) {
+						// jshint curly : false 
+						for (i = token.parameters.length - 1,
+							definition.params = new this.Array(i + 1),
+							definition.params[i] = token.parameters[i].name;
+							i >= 0;
+							definition.params[i] = token.parameters[i].name, --i);
+						// jshint curly : true
+					}
 
 					this.scope.define(name, definition);
 					break;
@@ -416,95 +418,48 @@ namespace("preprocessor.actions", [
 }).
 
 // Public API {{{1
-namespace("javascript.ES5_preprocessor", [
+namespace("jeefo.preprocessor", [
+	"preprocessor.Scope",
+	"preprocessor.actions",
+	"preprocessor.Indentation",
 	"javascript.ES5_parser",
+	"javascript.Beautifier",
 	"javascript.Preprocessor",
-], function (parser, JavascriptPreprocessor) {
-
-	return;
-	var PublicJavascriptPreprocessor = function (defs, middlewares) {
-		this.pp          = new JavascriptPreprocessor({}, defs);
-		this.scope       = this.pp.scope;
-		this.middlewares = middlewares || [];
-	},
-	p = PublicJavascriptPreprocessor.prototype;
-	p.Scope                  = JavascriptPreprocessor.prototype.Scope;
-	p.parser                 = parser;
-	p.JavascriptPreprocessor = JavascriptPreprocessor;
-
-	p.define = function (name, definition, is_return) {
-		var code = `PP.define(${ name }, ${ definition.toString() }, ${ is_return });`;
-		var file = parser("[IN MEMORY]", code);
-
-		this.pp.compiler.current_indent = '';
-
-		this.scope = new this.Scope(null, this.scope.defs);
-		this.pp.process(file.program.body, this.scope);
-	};
-
-	p.$new = function () {
-		return new PublicJavascriptPreprocessor(this.scope.defs, this.middlewares.concat());
-	};
-
-	p.middleware = function (middleware) {
-		this.middlewares.push(middleware);
-	};
-
-	p.get_defs = function (defs) {
-		return new this.Scope(this.scope, defs).defs;
-	};
-
-	p.process = function (filename, source_code, defs, indent, indentation) {
-		var i    = 0,
-			file = this.parser(filename, source_code),
-			pp   = new this.JavascriptPreprocessor(file, this.get_defs(defs), indent, indentation);
-
-		for (; i < this.middlewares.length; ++i) {
-			this.middlewares[i](pp);
-		}
-
-		pp.process(file.program.body, pp.scope);
-		pp.actions.sort(function (a, b) { return a.start - b.start; });
-
-		for (i = pp.actions.length - 1; i >= 0; --i) {
-			switch (pp.actions[i].type) {
-				case "remove":
-					pp.remove(pp.actions[i]);
-					break;
-				case "replace":
-					pp.replace_between(pp.actions[i]);
-					break;
+], function (Scope, actions, Indentation, es5_parser, JavascriptBeautifier, JavascriptPreprocessor) {
+	var parser   = {
+			parse : function (code) {
+				return es5_parser("[IN MEMORY]", code).program.body;
 			}
-		}
+		},
+		indent   = new Indentation('', '\t'),
+		scope    = new Scope(null, indent),
+		compiler = new JavascriptBeautifier(),
+		instance = new JavascriptPreprocessor(parser, compiler, actions, scope);
+	
+	instance.pre_define("IS_NULL"      , function (x) { return x === null;   }, true);
+	instance.pre_define("IS_DEFINED"   , function (x) { return x !== void 0; }, true);
+	instance.pre_define("IS_UNDEFINED" , function (x) { return x === void 0; }, true);
 
-		return pp.result;
-	};
+	instance.pre_define("IS_NUMBER"   , function (x) { return typeof x === "number";   } , true);
+	instance.pre_define("IS_STRING"   , function (x) { return typeof x === "string";   } , true);
+	instance.pre_define("IS_BOOLEAN"  , function (x) { return typeof x === "boolean";  } , true);
+	instance.pre_define("IS_FUNCTION" , function (x) { return typeof x === "function"; } , true);
 
-	var instance = new PublicJavascriptPreprocessor();
+	instance.pre_define("IS_OBJECT" , function (x) { return x !== null && typeof x === "object"; } , true);
 
-	instance.define("IS_NULL"      , function (x) { return x === null;   }, true);
-	instance.define("IS_DEFINED"   , function (x) { return x !== void 0; }, true);
-	instance.define("IS_UNDEFINED" , function (x) { return x === void 0; }, true);
+	instance.pre_define("ARRAY_EXISTS" , function (arr, x) { return arr.indexOf(x) >= 0; } , true);
+	instance.pre_define("ARRAY_NOT_EXISTS" , function (arr, x) { return arr.indexOf(x) === -1; } , true);
 
-	instance.define("IS_NUMBER"   , function (x) { return typeof x === "number";   } , true);
-	instance.define("IS_STRING"   , function (x) { return typeof x === "string";   } , true);
-	instance.define("IS_BOOLEAN"  , function (x) { return typeof x === "boolean";  } , true);
-	instance.define("IS_FUNCTION" , function (x) { return typeof x === "function"; } , true);
-
-	instance.define("IS_OBJECT" , function (x) { return x !== null && typeof x === "object"; } , true);
-
-	instance.define("ARRAY_EXISTS" , function (arr, x) { return arr.indexOf(x) >= 0; } , true);
-	instance.define("ARRAY_NOT_EXISTS" , function (arr, x) { return arr.indexOf(x) === -1; } , true);
-
-	instance.define("IS_JEEFO_PROMISE" , function (x) { return x && x.type === "JEEFO_PROMISE"; } , true);
+	instance.pre_define("IS_JEEFO_PROMISE" , function (x) { return x && x.type === "JEEFO_PROMISE"; } , true);
 
 	return instance;
 });
 // }}}1
 
 // ignore:start
-// Debug {{{1
 };
+
+// Debug {{{1
 
 if (require.main === module) {
 
@@ -517,54 +472,16 @@ jeefo.use(require("jeefo_javascript_beautifier"));
 
 jeefo.use(module.exports);
 
-var pp = jeefo.module("jeefo_preprocessor");
+var pp = jeefo.module("jeefo.preprocessor");
 
 pp.run([
-	"preprocessor.Scope",
-	"preprocessor.actions",
-	"preprocessor.Indentation",
-	"javascript.ES5_parser",
-	"javascript.Beautifier",
-	"javascript.Preprocessor",
-], function (Scope, actions, Indentation, es5_parser, JavascriptBeautifier, JavascriptPreprocessor) {
+	"jeefo.preprocessor",
+], function (pp) {
 
 	var source = `
 		var z = IS_UNDEFINED(value);
 		var fff = fff;
 	`;
-
-	var parser   = {
-			parse : function (code) {
-				return es5_parser("[IN MEMORY]", code).program.body;
-			}
-		},
-		indent   = new Indentation('', '\t'),
-		scope    = new Scope(null, indent),
-		compiler = new JavascriptBeautifier(),
-		pp       = new JavascriptPreprocessor(parser, compiler, actions, scope);
-
-	var define_from_string = function (name, str) {
-		var token = es5_parser("[IN MEMORY]", str).program.body[0];
-		pp.define(name, token.expression);
-	};
-
-	define_from_string("fff", "complicated[computed[x]]");
-
-	pp.pre_define("IS_NULL"      , function (x) { return x === null;   }, true);
-	pp.pre_define("IS_DEFINED"   , function (x) { return x !== void 0; }, true);
-	pp.pre_define("IS_UNDEFINED" , function (x) { return x === void 0; }, true);
-
-	pp.pre_define("IS_NUMBER"   , function (x) { return typeof x === "number";   } , true);
-	pp.pre_define("IS_STRING"   , function (x) { return typeof x === "string";   } , true);
-	pp.pre_define("IS_BOOLEAN"  , function (x) { return typeof x === "boolean";  } , true);
-	pp.pre_define("IS_FUNCTION" , function (x) { return typeof x === "function"; } , true);
-
-	pp.pre_define("IS_OBJECT" , function (x) { return x !== null && typeof x === "object"; } , true);
-
-	pp.pre_define("ARRAY_EXISTS" , function (arr, x) { return arr.indexOf(x) >= 0; } , true);
-	pp.pre_define("ARRAY_NOT_EXISTS" , function (arr, x) { return arr.indexOf(x) === -1; } , true);
-
-	pp.pre_define("IS_JEEFO_PROMISE" , function (x) { return x && x.type === "JEEFO_PROMISE"; } , true);
 
 	var c = pp.compile(source, pp.parse(source));
 	console.log(c);
