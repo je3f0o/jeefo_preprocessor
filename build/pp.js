@@ -1,5 +1,5 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-* File Name   : javascript_preprocessor.js
+* File Name   : preprocessor.js
 * Created at  : 2017-04-26
 * Updated at  : 2017-05-08
 * Author      : jeefo
@@ -267,7 +267,7 @@ pp.namespace("javascript.Preprocessor", [
 			}
 		}
 
-		for (i = scope.level - 1; i >= 1; --i) {
+		for (i = scope.level - 1; i >= 0; --i) {
 			this.compiler.current_indent = this.compiler.current_indent + this.compiler.indentation;
 		}
 		
@@ -694,6 +694,7 @@ pp.run(["javascript.ES5_preprocessor"], function (pp) {
 		path = require("path");
 	
 	var filename = path.join(__dirname, "./javascript_preprocessor.js");
+	filename = path.join(__dirname, "../node_modules/jeefo_javascript_parser/src/javascript_parser.js");
 	var source = fs.readFileSync(filename, "utf8");
 
 

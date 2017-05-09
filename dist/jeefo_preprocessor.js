@@ -8,7 +8,7 @@
 jeefo.use(function () {
 
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-* File Name   : javascript_preprocessor.js
+* File Name   : preprocessor.js
 * Created at  : 2017-04-26
 * Updated at  : 2017-05-08
 * Author      : jeefo
@@ -267,7 +267,7 @@ pp.namespace("javascript.Preprocessor", [
 			}
 		}
 
-		for (i = scope.level - 1; i >= 1; --i) {
+		for (i = scope.level - 1; i >= 0; --i) {
 			this.compiler.current_indent = this.compiler.current_indent + this.compiler.indentation;
 		}
 		
