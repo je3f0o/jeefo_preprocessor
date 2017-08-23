@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-* File Name   : preprocessor.js
-* Created at  : 2017-04-26
-* Updated at  : 2017-08-20
+* File Name   : _preprocessor.js
+* Created at  : 2017-08-18
+* Updated at  : 2017-08-18
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -13,7 +13,7 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 
 // ignore:end
 
-var JavascriptPreprocessor = function (parser, compiler, actions, scope, state) {
+var Preprocessor = function (parser, compiler, actions, scope, state) {
 	this.state    = state || {};
 	this.scope    = scope;
 	this.parser   = parser;
@@ -21,21 +21,25 @@ var JavascriptPreprocessor = function (parser, compiler, actions, scope, state) 
 	this.compiler = compiler;
 };
 
-JavascriptPreprocessor.prototype = {
+Preprocessor.prototype = {
 	// Utils {{{1
 	$new : function (token) {
-		var pp = new JavascriptPreprocessor(this.parser, this.compiler, this.actions, this.scope, this.state);
+		var pp = new Preprocessor(this.parser, this.compiler, this.actions, this.scope, this.state);
 		if (token) {
 			pp.code = this.get_code(this.code, token);
 		}
 		return pp;
 	},
 
-	clone : function () {
-		return new JavascriptPreprocessor(this.parser, this.compiler, this.actions.clone(), this.scope.clone(), this.state);
+	copy : function () {
+		return new Preprocessor(this.parser, this.compiler, this.actions.clone(), this.scope.clone(), this.state);
 	},
 
 	// Actions {{{1
+	has_action : function (name) {
+		return this.actions.handlers[name] !== void 0;
+	},
+
 	action : function (action) {
 		if (action) {
 			switch (action.type) {
@@ -72,7 +76,7 @@ JavascriptPreprocessor.prototype = {
 			code = `PP.define("${ name }", ${ definition.toString() }, ${ is_return });`;
 
 		pp.scope = this.scope;
-		pp.process("[IN MEMORY]", code);
+		pp.compile(code, pp.parse(code));
 	},
 
 	define : function (name, token, ret) {
@@ -81,34 +85,12 @@ JavascriptPreprocessor.prototype = {
 				var definition = this.$new(),
 					i = 0, body = token.body.body;
 
-				if (ret) {
-					switch (ret.type) {
-						case "NullLiteral" :
-							ret = false;
+				if (ret && ret.name !== "null" && ret.name !== "false" && ret.value !== '0') {
+					for (i = 0; i < body.length; ++i) {
+						if (body[i].type === "ReturnStatement") {
+							definition.code   = this.get_code(this.code, body[i].argument);
+							definition.tokens = this.parse(definition.code);
 							break;
-						case "NumberLiteral" :
-							if (ret.value === "0") {
-								ret = false;
-							}
-							break;
-						case "BooleanLiteral" :
-							if (ret.value === "false") {
-								ret = false;
-							}
-							break;
-						default:
-							console.log("WHAT IS PP.define() 3rd argument ?");
-							console.log(ret);
-							process.exit();
-					}
-
-					if (ret) {
-						for (i = 0; i < body.length; ++i) {
-							if (body[i].type === "ReturnStatement") {
-								definition.code   = this.get_code(this.code, body[i].argument);
-								definition.tokens = this.parse(definition.code);
-								break;
-							}
 						}
 					}
 				} else {
@@ -120,11 +102,13 @@ JavascriptPreprocessor.prototype = {
 				}
 
 				if (token.parameters.length) {
-					i                 = token.parameters.length;
-					definition.params = [];
-					while (i--) {
+					// jshint curly : false 
+					for (i = token.parameters.length - 1,
+						definition.params = new this.Array(i + 1),
 						definition.params[i] = token.parameters[i].name;
-					}
+						i >= 0;
+						definition.params[i] = token.parameters[i].name, --i);
+					// jshint curly : true
 				}
 
 				this.scope.define(name, definition);
@@ -134,14 +118,16 @@ JavascriptPreprocessor.prototype = {
 		}
 	},
 
-	// Processor {{{1
-	process_tokens : function (code, tokens) {
-		var actions = [], i = 0;
+	// Compile {{{1
+	compile : function (code, tokens) {
+		var i = 0, j = 0, actions = [];
 
 		this.code = code;
 
 		for (; i < tokens.length; ++i) {
-			actions[i] = this.actions.invoke(this, tokens[i]);
+			if (this.has_action(tokens[i].type)) {
+				actions[j++] = this.actions.invoke(this, tokens[i]);
+			}
 		}
 
 		i = actions.length;
@@ -150,10 +136,6 @@ JavascriptPreprocessor.prototype = {
 		}
 
 		return this.code;
-	},
-
-	process : function (filename, code) {
-		return this.process_tokens(code, this.parser.parse(code));
 	},
 
 	// Parser {{{1
@@ -165,6 +147,7 @@ JavascriptPreprocessor.prototype = {
 			console.log(code);
 			process.exit();
 		}
+		return this.parser.parse(code);
 	},
 
 	get_code : function (code, token) {
@@ -173,4 +156,4 @@ JavascriptPreprocessor.prototype = {
 	// }}}1
 };
 
-module.exports = JavascriptPreprocessor;
+module.exports = Preprocessor;

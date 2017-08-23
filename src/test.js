@@ -1,6 +1,6 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-* File Name   : index.js
-* Created at  : 2017-04-29
+* File Name   : test.js
+* Created at  : 2017-08-19
 * Updated at  : 2017-08-20
 * Author      : jeefo
 * Purpose     :
@@ -13,12 +13,12 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 
 // ignore:end
 
-var Scope                  = require("./src/scope"),
+var Scope                  = require("./scope"),
 	parser                 = require("jeefo_javascript_parser/src/es5_parser"),
-	actions                = require("./src/actions/es5"),
+	actions                = require("./default_actions"),
 	compiler               = require("jeefo_javascript_beautifier"),
-	Indentation            = require("./src/indentation"),
-	JavascriptPreprocessor = require("./src/preprocessor"),
+	Indentation            = require("./indentation"),
+	JavascriptPreprocessor = require("./preprocessor"),
 
 	indent       = new Indentation('', '\t'),
 	scope        = new Scope(null, indent),
@@ -40,20 +40,4 @@ preprocessor.pre_define("ARRAY_EXISTS" , function (arr, x) { return arr.indexOf(
 preprocessor.pre_define("IS_JEEFO_PROMISE" , function (x) { return x && x.type === "JEEFO_PROMISE"; } , true);
 preprocessor.pre_define("ARRAY_LAST", function (arr) { return arr[arr.length - 1]; }, true);
 
-var es6_pp = preprocessor.clone();
-es6_pp.parser  = require("jeefo_javascript_parser/src/es6_parser");
-es6_pp.actions = require("./src/actions/es6");
-
-module.exports = {
-	es5 : preprocessor,
-	es6 : es6_pp
-};
-
-/*
-var code = `
-PP.define("ASSIGN_TEN", function (x) { return x = 10; }, true);
-
-ASSIGN_TEN(dynamic_var);`;
-
-console.log(preprocessor.process("In memory", code));
-*/
+console.log(preprocessor.compile("IS_UNDEFINED(x)"));
