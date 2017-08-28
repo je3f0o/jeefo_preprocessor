@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : call_expression.js
 * Created at  : 2017-08-18
-* Updated at  : 2017-08-20
+* Updated at  : 2017-08-26
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -44,6 +44,8 @@ module.exports = {
 	name    : "CallExpression",
 	handler : function (pp, token) {
 		switch (token.callee.type) {
+			case "CallExpression" :
+				return call_expression(pp, token);
 			case "MemberExpression" :
 				if (token.callee.object.name === "PP" && token.callee.property.name === "define") {
 					pp.define(

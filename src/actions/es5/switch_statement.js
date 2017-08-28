@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : switch_statement.js
 * Created at  : 2017-08-18
-* Updated at  : 2017-08-20
+* Updated at  : 2017-08-27
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -21,11 +21,18 @@ module.exports = {
 			actions = [], i = 0, j = 0, s, has_action, statements;
 
 		for (; i < cases.length; ++i) {
-			if (cases[i].test) {
-				actions[j++] = pp.actions.invoke(pp, cases[i].test);
-			}
-			for (statements = cases[i].statements, s = 0; s < statements.length; ++s) {
-				actions[j++] = pp.actions.invoke(pp, statements[s]);
+			switch (cases[i].type) {
+				case "SwitchCase" :
+					actions[j++] = pp.actions.invoke(pp, cases[i].test);
+					for (statements = cases[i].statements, s = 0; s < statements.length; ++s) {
+						actions[j++] = pp.actions.invoke(pp, statements[s]);
+					}
+					break;
+				case "DefaultCase" :
+					for (statements = cases[i].statements, s = 0; s < statements.length; ++s) {
+						actions[j++] = pp.actions.invoke(pp, statements[s]);
+					}
+					break;
 			}
 		}
 
