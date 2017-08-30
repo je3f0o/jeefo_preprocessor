@@ -1,6 +1,6 @@
 {
   "name": "jeefo_preprocessor",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "jeefo javascript preprocessor",
   "author": {
     "name": "je3f0o",
@@ -27,7 +27,7 @@
   ],
   "dependencies": {
     "jeefo_javascript_beautifier": "^0.0.5",
-    "jeefo_javascript_parser": "^0.0.16"
+    "jeefo_javascript_parser": "^0.0.17"
   },
   "devDependencies": {
     "expect": "^1.20.2",
