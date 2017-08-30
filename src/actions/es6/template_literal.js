@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : template_literal.js
 * Created at  : 2017-08-18
-* Updated at  : 2017-08-20
+* Updated at  : 2017-08-31
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -13,7 +13,8 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 
 // ignore:end
 
-var get_string = require("../es5/get_string");
+var get_string       = require("../es5/get_string"),
+	LINE_BREAK_REGEX = /\n/g;
 
 module.exports = {
 	name    : "TemplateLiteral",
@@ -25,7 +26,7 @@ module.exports = {
 		while (i--) {
 			switch (body[i].type) {
 				case "TemplateLiteralString" :
-					values[i] = get_string(body[i].value);
+					values[i] = get_string(body[i].value.replace(LINE_BREAK_REGEX, "\\n"));
 					break;
 				case "TemplateLiteralExpression" :
 					tl_pp     = pp.$new(body[i].expression);
