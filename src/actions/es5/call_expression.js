@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : call_expression.js
 * Created at  : 2017-08-18
-* Updated at  : 2017-08-26
+* Updated at  : 2017-09-07
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -40,10 +40,40 @@ var call_expression = function (_pp, token) {
 	}
 };
 
+// Immediately invoked function expression
+var IIFE = function (_pp, token) {
+	var pp      = _pp.$new(token),
+		stmts   = pp.parse(pp.code),
+		actions = [], i = 0, has_action;
+
+	actions[0] = pp.actions.invoke(pp, stmts[0]);
+	// TODO: parse params too
+	/*
+	for (; i < args.length; ++i) {
+		actions[i + 1] = pp.actions.invoke(pp, args[i]);
+	}
+	*/
+
+	i = actions.length;
+	while (i--) {
+		if (has_action) {
+			pp.action(actions[i]);
+		} else {
+			has_action = pp.action(actions[i]);
+		}
+	}
+
+	if (has_action) {
+		return _pp.replace(token, pp.code);
+	}
+};
+
 module.exports = {
 	name    : "CallExpression",
 	handler : function (pp, token) {
 		switch (token.callee.type) {
+			case "FunctionExpression" :
+				return IIFE(pp, token);
 			case "CallExpression" :
 				return call_expression(pp, token);
 			case "MemberExpression" :
