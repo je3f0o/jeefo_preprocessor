@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2017-08-18
-* Updated at  : 2017-08-20
+* Updated at  : 2018-12-18
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -31,6 +31,7 @@ var Actions         = require("../../actions"),
 		"block_statement",
 		"return_statement",
 		"switch_statement",
+		"do_while_statement",
 		"continue_statement",
 		"labelled_statement",
 		"expression_statement",
